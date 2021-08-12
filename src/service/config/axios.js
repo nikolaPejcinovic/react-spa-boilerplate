@@ -1,25 +1,39 @@
 import axios from "axios";
 
+// Utils
+import { getValue } from "utils";
+
 const config = {
-  baseURL: process.env.REACT_APP_API_PATH,
-  validateStatus: (status) => status >= 200 && status < 300,
+  validateStatus: status => status >= 200 && status < 300,
   headers: {
     Accept: "*",
-    "Content-Type": "application/json; charset=utf-8",
-  },
+    "Content-Type": "application/json; charset=utf-8"
+  }
 };
 
 const api = axios.create(config);
 
-api.interceptors.request.use(
-  (config) => {
-    if (config.method === "patch") {
-      config.headers["Content-Type"] = "multipart/form-data";
-    }
+const apiConfig = baseURL => {
+  api.interceptors.request.use(
+    config => {
+      const token = getValue('access_token')
 
-    return config;
-  },
-  (error) => Promise.reject(error)
-);
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
 
-export default api;
+      config.baseURL = baseURL;
+
+      if (config.method === "patch") {
+        config.headers["Content-Type"] = "multipart/form-data";
+      }
+
+      return config;
+    },
+    error => Promise.reject(error)
+  );
+
+  return api;
+};
+
+export default apiConfig;
